@@ -1,0 +1,154 @@
+{
+  "name": "troubleshooting_ecs_fargate_service_health_check_failures",
+  "description": "This incident type refers to troubleshooting issues related to blue/green deployments for services hosted on Amazon Elastic Container Service (ECS) Fargate. Specifically, the incident involves ECS service failing to stabilize due to health check failures. The solution involves ensuring that the port mappings of task definitions match the ports of target groups. To troubleshoot load balancer health check issues for ECS Fargate task and pass the Application Load Balancer health check, connectivity between the load balancer and Amazon ECS task, health check settings of the target group, and status and configuration of the application in ECS Fargate container must be checked.",
+  "params": [
+    {
+      "name": "TASK_ARN",
+      "value": ""
+    },
+    {
+      "name": "TASK_ID",
+      "value": ""
+    },
+    {
+      "name": "SERVICE_NAME",
+      "value": ""
+    },
+    {
+      "name": "TARGET_GROUP_ARN",
+      "value": ""
+    },
+    {
+      "name": "LOG_GROUP_NAME",
+      "value": ""
+    },
+    {
+      "name": "LOG_STREAM_NAME",
+      "value": ""
+    },
+    {
+      "name": "LOAD_BALANCER_ARN",
+      "value": ""
+    },
+    {
+      "name": "CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Troubleshooting ECS Fargate Service Health Check Failures\nThis incident type refers to troubleshooting issues related to blue/green deployments for services hosted on Amazon Elastic Container Service (ECS) Fargate. Specifically, the incident involves ECS service failing to stabilize due to health check failures. The solution involves ensuring that the port mappings of task definitions match the ports of target groups. To troubleshoot load balancer health check issues for ECS Fargate task and pass the Application Load Balancer health check, connectivity between the load balancer and Amazon ECS task, health check settings of the target group, and status and configuration of the application in ECS Fargate container must be checked."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## 1. Check the status of the ECS task"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `aws ecs describe-tasks --cluster ${CLUSTER_NAME} --tasks ${TASK_ARN}`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## 2. Check the status of the ECS service"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `aws ecs describe-services --cluster ${CLUSTER_NAME} --services ${SERVICE_NAME}`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## 3. Check the status of the target group associated with the ECS service"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `aws elbv2 describe-target-health --target-group-arn ${TARGET_GROUP_ARN}`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## 4. Check the logs for the ECS task"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `aws logs get-log-events --log-group-name ${LOG_GROUP_NAME} --log-stream-name ${LOG_STREAM_NAME}`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## 5. Check the load balancer configuration"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `aws elbv2 describe-load-balancers --load-balancer-arns ${LOAD_BALANCER_ARN}`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## 6. Check the health check settings for the target group"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `aws elbv2 describe-target-group-attributes --target-group-arn ${TARGET_GROUP_ARN}`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## 7. Check the status and configuration of the application in the ECS Fargate container"
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_ecs_describe_tasks_containers_info($TASK_ID, $CLUSTER_NAME)"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Compare the port mappings of your task definitions match the ports of your target groups and update the task definition"
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_update_task_definition($SERVICE_NAME, $TARGET_GROUP_ARN, $CLUSTER_NAME)"
+    }
+  ]
+}
